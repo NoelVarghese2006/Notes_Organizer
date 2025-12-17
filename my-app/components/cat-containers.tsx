@@ -66,14 +66,25 @@ export function CardColumn({
     window.removeEventListener("mouseup", handleMouseUp)
     document.body.style.userSelect = ""
 
-    // Persist position to parent + DB
-    onUpdatePosition(id, pos.x, pos.y)
-    await supabase
-      .from("categories")
-      .update({ position_x: pos.x, position_y: pos.y })
-      .eq("id", id)
-      .eq("user_id", userId)
+    // Use latest pos
+    setPos((latestPos) => {
+        // schedule parent update after render
+        setTimeout(() => {
+        onUpdatePosition(id, latestPos.x, latestPos.y)
+
+        supabase
+            .from("categories")
+            .update({ position_x: latestPos.x, position_y: latestPos.y })
+            .eq("id", id)
+            .eq("user_id", userId)
+        }, 0)
+
+        return latestPos
+    })
   }
+
+
+
 
   return (
     <Card

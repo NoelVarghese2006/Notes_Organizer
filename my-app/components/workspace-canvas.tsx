@@ -23,6 +23,8 @@ interface Category {
   id: string
   name: string
   color: string
+  position_x: number
+  position_y: number
 }
 
 interface WorkspaceCanvasProps {
@@ -126,8 +128,8 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             id={category.id}
             title={category.name} 
             userId={userId} 
-            x={index * 50} 
-            y={100} 
+            x={category.position_x} 
+            y={category.position_y} 
             color={category.color}
             onUpdatePosition={(id, x, y) =>
               setCategories((prev) =>

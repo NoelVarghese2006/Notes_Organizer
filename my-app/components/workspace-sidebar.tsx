@@ -47,6 +47,8 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
       name: catName,
       color: "#94a3b8",
       position: categories.length + index,
+      position_x: 100 + (index % 5) * 280,
+      position_y: 100 + Math.floor(index / 5) * 180,
     }))
 
     // Insert new categories if any
@@ -59,18 +61,12 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
       if (newCategories) {
         setCategories([...categories, ...newCategories])
       }
-    
-    
-      // Determine category ID for notes
-      const categoryId = categories.length > 0 ? categories[0].id : null
-
-      
-
+    }
       // Create notes from lines
       const notesToCreate = lines.map((line, index) => ({
         user_id: userId,
         project_id: projectId,
-        category: categoryId,
+        category: categories[0].id || null,
         content: line,
         position_x: 100 + (index % 5) * 280,
         position_y: 100 + Math.floor(index / 5) * 180,
@@ -87,7 +83,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
       if (error) {
         console.error("Error creating notes:", error)
       }
-    }
+    
     setBulkText("")
     setIsCreating(false)
     router.refresh()
