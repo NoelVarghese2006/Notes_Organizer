@@ -7,25 +7,9 @@ import { NoteCard } from "@/components/note-card"
 import { ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardColumn } from "./cat-containers"
-
-interface Note {
-  id: string
-  content: string
-  category_id: string | null
-  position_x: number
-  position_y: number
-  width: number
-  height: number
-  created_at: string
-}
-
-interface Category {
-  id: string
-  name: string
-  color: string
-  position_x: number
-  position_y: number
-}
+import { useNotesStore } from "@/lib/store"
+import { Note } from "@/lib/store"
+import { Category } from "@/lib/store"
 
 interface WorkspaceCanvasProps {
   notes: Note[]
@@ -34,7 +18,8 @@ interface WorkspaceCanvasProps {
 }
 
 export function WorkspaceCanvas({ notes: initialNotes, categories: initialCategories, userId }: WorkspaceCanvasProps) {
-  const [notes, setNotes] = useState(initialNotes)
+  const notes = useNotesStore()
+  //const [notes, setNotes] = useState(initialNotes)
   const [categories, setCategories] = useState(initialCategories)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -108,43 +93,50 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             transformOrigin: "0 0",
           }}
         >
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              color={getCategoryColor(note.category_id)}
-              userId={userId}
-              onUpdate={(updatedNote) => {
-                setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)))
-              }}
-              onDelete={(noteId) => {
-                setNotes((prev) => prev.filter((n) => n.id !== noteId))
-              }}
-            />
-          ))}
-          {categories.map((category, index) => (
-            <CardColumn 
-            key={category.id} 
+          {categories.map((category) => (
+          <CardColumn
+            key={category.id}
             id={category.id}
-            title={category.name} 
-            userId={userId} 
-            x={category.position_x} 
-            y={category.position_y} 
+            title={category.name}
+            userId={userId}
+            x={category.position_x}
+            y={category.position_y}
             color={category.color}
             onUpdatePosition={(id, x, y) =>
               setCategories((prev) =>
-              prev.map((c) => (c.id === id ? { ...c, position_x: x, position_y: y } : c))
-            )}>
-              {notes
+                prev.map((c) =>
+                  c.id === id ? { ...c, position_x: x, position_y: y } : c
+                )
+              )
+            }
+          >
+            {notes.notes
               .filter((n) => n.category_id === category.id)
               .map((note) => (
-                <div>{note.content}</div>
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  color={category.color}
+                  userId={userId}
+                  onUpdate={(updatedNote) => {
+                    notes.setNotes((prev) =>
+                      prev.map((n) => (n.id === updatedNote.id ? updatedNote : n))
+                    )
+                  }}
+                  onDelete={(noteId) => {
+                    notes.setNotes((prev) =>
+                      prev.filter((n) => n.id !== noteId)
+                    )
+                  }}
+                />
               ))}
-              </CardColumn>))}
+          </CardColumn>
+          ))}
+
         </div>
       </div>
 
-      {notes.length === 0 && (
+      {notes.notes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center max-w-md">
             <Move className="size-12 mx-auto mb-4 text-muted-foreground" />

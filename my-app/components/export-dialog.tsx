@@ -13,24 +13,12 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/client"
 import { Download, Copy, Check } from "lucide-react"
+import { Category, Note } from "@/lib/store"
 
 interface ExportDialogProps {
   open: boolean
   onClose: () => void
   userId: string
-}
-
-interface Note {
-  id: string
-  content: string
-  category_id: string | null
-  created_at: string
-}
-
-interface Category {
-  id: string
-  name: string
-  color: string
 }
 
 export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {

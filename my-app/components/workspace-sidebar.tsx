@@ -8,13 +8,7 @@ import { Plus, FolderOpen, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/client"
 import { useRouter } from "next/navigation"
 import { useNotesStore } from "@/lib/store"
-
-interface Category {
-  id: string
-  name: string
-  color: string
-  position: number
-}
+import { Category } from "@/lib/store"
 
 interface WorkspaceSidebarProps {
   categories: Category[]
