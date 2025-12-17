@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Plus, FolderOpen, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/client"
 import { useRouter } from "next/navigation"
+import { useNotesStore } from "@/lib/store"
 
 interface Category {
   id: string
@@ -18,14 +19,16 @@ interface Category {
 interface WorkspaceSidebarProps {
   categories: Category[]
   userId: string
+  projectId: string
 }
 
-export function WorkspaceSidebar({ categories: initialCategories, userId }: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ categories: initialCategories, userId, projectId }: WorkspaceSidebarProps) {
   const [categories, setCategories] = useState(initialCategories)
   const [bulkText, setBulkText] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const notes = useNotesStore()
 
   const handleBulkCreate = async () => {
     if (!bulkText.trim()) return
@@ -36,57 +39,55 @@ export function WorkspaceSidebar({ categories: initialCategories, userId }: Work
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
 
-    // Get first category (or create default if none)
-    let categoryId = categories[0]?.id
+    const catLine = lines.filter((line) => line.endsWith(":")).map((line) => line.slice(0, -1).trim())
 
-    if (!categoryId) {
-      const { data: newCategory } = await supabase
-        .from("categories")
-        .insert({
-          user_id: userId,
-          name: "Uncategorized",
-          color: "#94a3b8",
-          position: 0,
-        })
-        .select()
-        .single()
-
-      if (newCategory) {
-        categoryId = newCategory.id
-        setCategories([newCategory])
-      }
-    }
-
-    const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .insert({
-      user_id: userId,
-      name: "My Project", // or whatever name you want
-    })
-    .select("id")
-    .single()
-
-    if (projectError) {
-      console.error(projectError)
-      throw projectError
-    }
-
-    const projectId = project.id
-
-    // Create notes from lines
-    const notesToCreate = lines.map((line, index) => ({
+    const catsToCreate = catLine.map((catName, index) => ({
       user_id: userId,
       project_id: projectId,
-      category: categoryId,
-      content: line,
-      position_x: 100 + (index % 5) * 280,
-      position_y: 100 + Math.floor(index / 5) * 180,
-      width: 250,
-      height: 150,
+      name: catName,
+      color: "#94a3b8",
+      position: categories.length + index,
     }))
 
-    await supabase.from("notes").insert(notesToCreate)
+    // Insert new categories if any
+    if (catsToCreate.length > 0) {
+      const { data: newCategories } = await supabase
+        .from("categories")
+        .insert(catsToCreate)
+        .select()
 
+      if (newCategories) {
+        setCategories([...categories, ...newCategories])
+      }
+    
+    
+      // Determine category ID for notes
+      const categoryId = categories.length > 0 ? categories[0].id : null
+
+      
+
+      // Create notes from lines
+      const notesToCreate = lines.map((line, index) => ({
+        user_id: userId,
+        project_id: projectId,
+        category: categoryId,
+        content: line,
+        position_x: 100 + (index % 5) * 280,
+        position_y: 100 + Math.floor(index / 5) * 180,
+        width: 250,
+        height: 150,
+      }))
+
+      const { data: newNotes, error } = await supabase.from("notes").insert(notesToCreate).select()
+
+      if (newNotes) {
+        notes.addNotes(newNotes)
+      }
+
+      if (error) {
+        console.error("Error creating notes:", error)
+      }
+    }
     setBulkText("")
     setIsCreating(false)
     router.refresh()
@@ -104,7 +105,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId }: Work
           placeholder="• First note&#10;• Second note&#10;• Third note"
           value={bulkText}
           onChange={(e) => setBulkText(e.target.value)}
-          className="min-h-32 mb-3 font-mono text-sm"
+          className="min-h-32 max-h-64 mb-3 font-mono text-sm"
         />
         <Button onClick={handleBulkCreate} disabled={isCreating || !bulkText.trim()} className="w-full gap-2">
           <Plus className="size-4" />

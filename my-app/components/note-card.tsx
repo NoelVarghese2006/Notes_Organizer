@@ -92,7 +92,7 @@ export function NoteCard({ note, color, userId, onUpdate, onDelete }: NoteCardPr
   return (
     <Card
       ref={cardRef}
-      className="absolute cursor-move shadow-lg hover:shadow-xl transition-shadow"
+      className="absolute cursor-move shadow-lg hover:shadow-xl transition-shadow select-none"
       style={{
         left: note.position_x,
         top: note.position_y,

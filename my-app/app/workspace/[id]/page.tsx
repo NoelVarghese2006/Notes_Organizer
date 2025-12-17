@@ -4,8 +4,15 @@ import { WorkspaceCanvas } from "@/components/workspace-canvas"
 import { WorkspaceHeader } from "@/components/workspace-header"
 import { WorkspaceSidebar } from "@/components/workspace-sidebar"
 
-export default async function WorkspacePage() {
+export default async function WorkspacePage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const supabase = await createClient()
+
+  const resolvedParams = await Promise.resolve(params)
+  const projectId = resolvedParams.id
 
   const {
     data: { user },
@@ -28,13 +35,14 @@ export default async function WorkspacePage() {
     .from("notes")
     .select("*")
     .eq("user_id", user.id)
+    .eq("project_id", projectId)
     .order("created_at", { ascending: false })
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <WorkspaceHeader user={user} />
       <div className="flex flex-1 overflow-hidden">
-        <WorkspaceSidebar categories={categories || []} userId={user.id} />
+        <WorkspaceSidebar categories={categories || []} userId={user.id} projectId={projectId} />
         <WorkspaceCanvas notes={notes || []} categories={categories || []} userId={user.id} />
       </div>
     </div>

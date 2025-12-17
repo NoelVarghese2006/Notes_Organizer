@@ -6,6 +6,7 @@ import { useState, useRef } from "react"
 import { NoteCard } from "@/components/note-card"
 import { ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { CardColumn } from "./cat-containers"
 
 interface Note {
   id: string
@@ -30,8 +31,9 @@ interface WorkspaceCanvasProps {
   userId: string
 }
 
-export function WorkspaceCanvas({ notes: initialNotes, categories, userId }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ notes: initialNotes, categories: initialCategories, userId }: WorkspaceCanvasProps) {
   const [notes, setNotes] = useState(initialNotes)
+  const [categories, setCategories] = useState(initialCategories)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -118,6 +120,25 @@ export function WorkspaceCanvas({ notes: initialNotes, categories, userId }: Wor
               }}
             />
           ))}
+          {categories.map((category, index) => (
+            <CardColumn 
+            key={category.id} 
+            id={category.id}
+            title={category.name} 
+            userId={userId} 
+            x={index * 50} 
+            y={100} 
+            color={category.color}
+            onUpdatePosition={(id, x, y) =>
+              setCategories((prev) =>
+              prev.map((c) => (c.id === id ? { ...c, position_x: x, position_y: y } : c))
+            )}>
+              {notes
+              .filter((n) => n.category_id === category.id)
+              .map((note) => (
+                <div>{note.content}</div>
+              ))}
+              </CardColumn>))}
         </div>
       </div>
 

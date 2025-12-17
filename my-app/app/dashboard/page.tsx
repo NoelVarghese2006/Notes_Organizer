@@ -3,9 +3,16 @@ import { createClient } from "@/lib/server"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { CreateProjectDialog } from "@/components/new-project-dialog"
+
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  
+
 
   const {
     data: { user },
@@ -31,7 +38,7 @@ export default async function DashboardPage() {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user.email}</span>
-            <form action="/auth/signout" method="post">
+            <form action="/login" method="post">
               <Button variant="outline" size="sm">
                 Sign Out
               </Button>
@@ -47,23 +54,13 @@ export default async function DashboardPage() {
               <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
               <p className="text-muted-foreground">Create and manage your note organization projects</p>
             </div>
-            <Link href="/workspace/new">
-              <Button className="gap-2">
-                <Plus className="size-4" />
-                New Project
-              </Button>
-            </Link>
+            <CreateProjectDialog userId={user.id} />
           </div>
 
           {!projects || projects.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">You don&apos;t have any projects yet</p>
-              <Link href="/workspace/new">
-                <Button className="gap-2">
-                  <Plus className="size-4" />
-                  Create Your First Project
-                </Button>
-              </Link>
+                <CreateProjectDialog userId={user.id} />
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
