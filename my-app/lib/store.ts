@@ -4,7 +4,7 @@ export interface Note {
   id: string
   user_id: string
   project_id: string
-  category_id: string
+  category: string
   order_index: number
   content: string
   width: number
@@ -17,9 +17,10 @@ export interface NotesStore {
   notes: Note[]
   setNotes: (notes: Note[] | ((prev: Note[]) => Note[])) => void
   addNotes: (notes: Note[]) => void
+  saveAll: (supabase: any) => Promise<void>
 }
 
-export const useNotesStore = create<NotesStore>((set) => ({
+export const useNotesStore = create<NotesStore>((set, get) => ({
   notes: [],
   setNotes: (notesOrUpdater) =>
     set((state) => ({
@@ -30,6 +31,19 @@ export const useNotesStore = create<NotesStore>((set) => ({
     })),
   addNotes: (newNotes) =>
     set((state) => ({ notes: [...state.notes, ...newNotes] })),
+  saveAll: async (supabase) => {
+    const notes = get().notes
+
+    if (notes.length === 0) return
+
+    const { error } = await supabase
+      .from("notes")
+      .upsert(notes, { onConflict: "id" })
+
+    if (error) {
+      console.error("Failed to save notes:", error)
+    }
+  },
 }))
 
 export interface Category {
@@ -51,6 +65,7 @@ export interface CategoriesStore {
   addCategories: (categories: Category[]) => void
   getById: (id: string) => Category | undefined
   getByName: (name: string) => Category | undefined
+  saveAll: (supabase: any) => Promise<void>
 }
 
 export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
@@ -75,4 +90,17 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
     get().categories.find(
       (c) => c.name.toLowerCase() === name.toLowerCase()
     ),
+  saveAll: async (supabase) => {
+    const cats = get().categories
+
+    if (cats.length === 0) return
+
+    const { error } = await supabase
+      .from("categories")
+      .upsert(cats, { onConflict: "id" })
+
+    if (error) {
+      console.error("Failed to save categories:", error)
+    }
+  },
 }))

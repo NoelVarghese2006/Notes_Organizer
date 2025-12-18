@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { NoteCard } from "@/components/note-card"
 import { ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardColumn } from "./cat-containers"
-import { useNotesStore } from "@/lib/store"
+import { useCategoriesStore, useNotesStore } from "@/lib/store"
 import { Note } from "@/lib/store"
 import { Category } from "@/lib/store"
 
@@ -19,13 +19,24 @@ interface WorkspaceCanvasProps {
 
 export function WorkspaceCanvas({ notes: initialNotes, categories: initialCategories, userId }: WorkspaceCanvasProps) {
   const notes = useNotesStore()
+  const categories = useCategoriesStore()
   //const [notes, setNotes] = useState(initialNotes)
-  const [categories, setCategories] = useState(initialCategories)
+  //const [categories, setCategories] = useState(initialCategories)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLDivElement>(null)
+
+  const hydrated = useRef(false)
+
+  useEffect(() => {
+    if (hydrated.current) return
+    hydrated.current = true
+
+    notes.setNotes(initialNotes)
+    categories.setCategories(initialCategories)
+  }, [initialNotes, initialCategories])
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2))
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5))
@@ -51,7 +62,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
   }
 
   const getCategoryColor = (categoryId: string | null) => {
-    const category = categories.find((c) => c.id === categoryId)
+    const category = categories.categories.find((c) => c.id === categoryId)
     return category?.color || "#94a3b8"
   }
 
@@ -93,7 +104,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             transformOrigin: "0 0",
           }}
         >
-          {categories.map((category) => (
+          {categories.categories.map((category) => (
           <CardColumn
             key={category.id}
             id={category.id}
@@ -103,7 +114,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             y={category.position_y}
             color={category.color}
             onUpdatePosition={(id, x, y) =>
-              setCategories((prev) =>
+              categories.setCategories((prev) =>
                 prev.map((c) =>
                   c.id === id ? { ...c, position_x: x, position_y: y } : c
                 )
@@ -111,7 +122,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             }
           >
             {notes.notes
-              .filter((n) => n.category_id === category.id)
+              .filter((n) => n.category === category.id)
               .map((note) => (
                 <NoteCard
                   key={note.id}
@@ -136,7 +147,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
         </div>
       </div>
 
-      {notes.notes.length === 0 && (
+      {(notes.notes.length === 0 && categories.categories.length === 0)  && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center max-w-md">
             <Move className="size-12 mx-auto mb-4 text-muted-foreground" />

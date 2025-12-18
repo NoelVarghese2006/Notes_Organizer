@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/client"
-import { Layers, LogOut, Download } from "lucide-react"
+import { Layers, LogOut, Download, Save } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { ExportDialog } from "@/components/export-dialog"
+import { useCategoriesStore, useNotesStore } from "@/lib/store"
 
 interface WorkspaceHeaderProps {
   user: User
@@ -14,12 +15,24 @@ interface WorkspaceHeaderProps {
 
 export function WorkspaceHeader({ user }: WorkspaceHeaderProps) {
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const notes = useNotesStore()
+  const categories = useCategoriesStore()
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/")
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    await Promise.all([
+      notes.saveAll(supabase),
+      categories.saveAll?.(supabase),
+    ])
+    setIsSaving(false)
   }
 
   return (
@@ -36,6 +49,17 @@ export function WorkspaceHeader({ user }: WorkspaceHeaderProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-2"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              <Save className="size-4" />
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+
             <Button
               variant="outline"
               size="sm"

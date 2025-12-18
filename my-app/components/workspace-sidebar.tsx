@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Plus, FolderOpen, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/client"
 import { useRouter } from "next/navigation"
-import { useNotesStore } from "@/lib/store"
+import { useCategoriesStore, useNotesStore } from "@/lib/store"
 import { Category } from "@/lib/store"
 
 interface WorkspaceSidebarProps {
@@ -17,12 +17,13 @@ interface WorkspaceSidebarProps {
 }
 
 export function WorkspaceSidebar({ categories: initialCategories, userId, projectId }: WorkspaceSidebarProps) {
-  const [categories, setCategories] = useState(initialCategories)
+  //const [categories, setCategories] = useState(initialCategories)
   const [bulkText, setBulkText] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const notes = useNotesStore()
+  const categories = useCategoriesStore()
 
   const handleBulkCreate = async () => {
     if (!bulkText.trim()) return
@@ -35,12 +36,21 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
 
     const catLine = lines.filter((line) => line.endsWith(":")).map((line) => line.slice(0, -1).trim())
 
+    const noteLines = lines
+    .filter((line) => !line.endsWith(":"))
+    .map((line) =>
+      line
+        .replace(/^\s*(?:[-*•]\s*)?/, "")
+        .trim()
+    )
+
+
     const catsToCreate = catLine.map((catName, index) => ({
       user_id: userId,
       project_id: projectId,
       name: catName,
       color: "#94a3b8",
-      position: categories.length + index,
+      position: categories.categories.length + index,
       position_x: 100 + (index % 5) * 280,
       position_y: 100 + Math.floor(index / 5) * 180,
     }))
@@ -53,14 +63,15 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
         .select()
 
       if (newCategories) {
-        setCategories([...categories, ...newCategories])
+        categories.setCategories([...categories.categories, ...newCategories])
       }
     }
+    if(noteLines.length > 0) {
       // Create notes from lines
-      const notesToCreate = lines.map((line, index) => ({
+      const notesToCreate = noteLines.map((line, index) => ({
         user_id: userId,
         project_id: projectId,
-        category: categories[0].id || null,
+        category: categories.categories[0].id || null,
         content: line,
         position_x: 100 + (index % 5) * 280,
         position_y: 100 + Math.floor(index / 5) * 180,
@@ -77,7 +88,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
       if (error) {
         console.error("Error creating notes:", error)
       }
-    
+    }
     setBulkText("")
     setIsCreating(false)
     router.refresh()
@@ -109,7 +120,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
           Categories
         </h2>
         <div className="space-y-2">
-          {categories.map((category) => (
+          {categories.categories.map((category) => (
             <Card key={category.id} className="p-3">
               <div className="flex items-center gap-2">
                 <div className="size-4 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
