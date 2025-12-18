@@ -15,7 +15,10 @@ interface CardColumnProps {
   width?: number
   color?: string
   children: React.ReactNode
+  registerRef?: (el: HTMLDivElement) => void
   onUpdatePosition: (id: string, x: number, y: number) => void
+  onMoveNote: (noteId: string, categoryId: string) => void
+
 }
 
 export function CardColumn({
@@ -27,7 +30,9 @@ export function CardColumn({
   width = 320,
   color = "#94a3b8",
   children,
+  registerRef,
   onUpdatePosition,
+  onMoveNote
 }: CardColumnProps) {
   const [pos, setPos] = useState({ x, y })
   const dragRef = useRef({ isDragging: false, offsetX: 0, offsetY: 0 })
@@ -83,11 +88,33 @@ export function CardColumn({
     })
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault() // REQUIRED to allow dropping
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+
+    const noteId = e.dataTransfer.getData("noteId")
+    if (!noteId) return
+
+    // update DB
+    await supabase
+        .from("notes")
+        .update({ category: id })
+        .eq("id", noteId)
+        .eq("user_id", userId)
+
+    // update local state
+    onMoveNote(noteId, id)
+  }
+
 
 
 
   return (
     <Card
+      ref={registerRef}
       className="absolute select-none shadow-lg"
       style={{
         left: pos.x,
@@ -104,7 +131,7 @@ export function CardColumn({
         <GripVertical className="size-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold">{title}</h2>
       </div>
-      <div className="flex flex-col gap-3 p-3">{children}</div>
+      <div className="flex flex-col gap-3 p-3" onDragOver={handleDragOver} onDrop={handleDrop}>{children}</div>
     </Card>
   )
 }

@@ -30,6 +30,11 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
 
   const hydrated = useRef(false)
 
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2))
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5))
+
+  const columnRefs = useRef<Record<string, HTMLDivElement>>({})
+
   useEffect(() => {
     if (hydrated.current) return
     hydrated.current = true
@@ -37,9 +42,6 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
     notes.setNotes(initialNotes)
     categories.setCategories(initialCategories)
   }, [initialNotes, initialCategories])
-
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2))
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5))
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
@@ -61,9 +63,28 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
     setIsPanning(false)
   }
 
-  const getCategoryColor = (categoryId: string | null) => {
-    const category = categories.categories.find((c) => c.id === categoryId)
-    return category?.color || "#94a3b8"
+  const onDropToColumn = (noteId: string, clientX: number) => {
+    let closestColumnId: string | null = null
+    let minDistance = Infinity
+
+    for (const [columnId, el] of Object.entries(columnRefs.current)) {
+      const rect = el.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const distance = Math.abs(clientX - centerX)
+
+      if (distance < minDistance) {
+        minDistance = distance
+        closestColumnId = columnId
+      }
+    }
+  }
+
+  const moveNoteToCategory = (noteId: string, categoryId: string) => {
+    notes.setNotes((prev) =>
+      prev.map((n) =>
+        n.id === noteId ? { ...n, category: categoryId } : n
+      )
+    )
   }
 
   return (
@@ -113,6 +134,8 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
             x={category.position_x}
             y={category.position_y}
             color={category.color}
+            registerRef={(el) => (columnRefs.current[category.id] = el)}
+            onMoveNote={moveNoteToCategory}
             onUpdatePosition={(id, x, y) =>
               categories.setCategories((prev) =>
                 prev.map((c) =>
@@ -123,12 +146,14 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
           >
             {notes.notes
               .filter((n) => n.category === category.id)
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
               .map((note) => (
                 <NoteCard
                   key={note.id}
                   note={note}
                   color={category.color}
                   userId={userId}
+                  onDropToColumn={onDropToColumn}
                   onUpdate={(updatedNote) => {
                     notes.setNotes((prev) =>
                       prev.map((n) => (n.id === updatedNote.id ? updatedNote : n))
