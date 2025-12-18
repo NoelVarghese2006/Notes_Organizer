@@ -121,13 +121,36 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
         </h2>
         <div className="space-y-2">
           {categories.categories.map((category) => (
-            <Card key={category.id} className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="size-4 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
-                <span className="text-sm font-medium truncate">{category.name}</span>
-              </div>
-            </Card>
-          ))}
+              <Card key={category.id} className="p-3">
+                <div className="flex items-center gap-2">
+                  <label className="relative">
+                    {/* Hidden color input */}
+                    <input
+                      type="color"
+                      value={category.color}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={(e) =>
+                        categories.setCategories((prev) =>
+                          prev.map((c) =>
+                            c.id === category.id
+                              ? { ...c, color: e.target.value }
+                              : c
+                          )
+                        )
+                      }
+                    />
+
+                    {/* Visible color circle */}
+                    <div
+                      className="size-4 rounded-full shrink-0 border"
+                      style={{ backgroundColor: category.color }}
+                    />
+                  </label>
+
+                  <span className="text-sm font-medium truncate">{category.name}</span>
+                </div>
+              </Card>
+            ))}
         </div>
       </div>
     </aside>
