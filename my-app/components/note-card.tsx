@@ -12,12 +12,13 @@ interface NoteCardProps {
   note: Note
   color: string
   userId: string
+  zoom: number
   onDropToColumn: (noteId: string, x: number) => void
   onUpdate: (note: Note) => void
   onDelete: (noteId: string) => void
 }
 
-export function NoteCard({ note, color, userId, onDropToColumn, onUpdate, onDelete }: NoteCardProps) {
+export function NoteCard({ note, color, userId, zoom, onDropToColumn, onUpdate, onDelete }: NoteCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(note.content)
   const supabase = createClient()
@@ -40,28 +41,55 @@ export function NoteCard({ note, color, userId, onDropToColumn, onUpdate, onDele
     onDelete(note.id)
   }
 
+  function getNoteColor(updatedAt: string | Date) {
+    const updated = new Date(updatedAt)
+    const now = new Date()
+
+    const diffMs = now.getTime() - updated.getTime()
+    const twoMonthsMs = 1000 * 60 * 60 * 24 * 60 // ~60 days
+
+    if (diffMs > twoMonthsMs) return "text-red-300"
+    return "text-inherit" // or text-gray-800, etc.
+  }
+
+
   return (
-    // <Card
-    //   draggable
-    //   onDragStart={(e) => {
-    //     // e.preventDefault()
-    //     e.dataTransfer.setData("noteId", note.id)
-    //     e.dataTransfer.effectAllowed = "move"
-    //     //e.dataTransfer.setDragImage(new Image(), 0, 0)
-    //   }}
-    // >
-    //   <p>{note.content}</p>
-    // </Card>
     <Card
       draggable={!isEditing}
-      onDragStart={(e) => {
-        e.dataTransfer.setData("noteId", note.id)
-        e.dataTransfer.effectAllowed = "move"
-      }}
       className="shadow-sm select-none cursor-grab active:cursor-grabbing"
       style={{
         borderLeftWidth: 4,
         borderLeftColor: color,
+      }}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("noteId", note.id)
+        e.dataTransfer.effectAllowed = "move"
+
+        const target = e.currentTarget as HTMLElement
+        const clone = target.cloneNode(true) as HTMLElement
+
+        const scale = 0.6 / zoom
+
+        clone.style.width = `${target.offsetWidth}px`
+        clone.style.opacity = "0.6"
+        clone.style.transform = `scale(${scale})`
+        clone.style.transformOrigin = "center"
+        clone.style.pointerEvents = "none"
+        clone.style.position = "absolute"
+        clone.style.top = "-9999px"
+        clone.style.left = "-9999px"
+
+        document.body.appendChild(clone)
+
+        e.dataTransfer.setDragImage(
+          clone,
+          target.offsetWidth / 2,
+          target.offsetHeight / 2
+        )
+
+        requestAnimationFrame(() => {
+          document.body.removeChild(clone)
+        })
       }}
     >
       <div className="p-3 flex flex-col gap-2">
@@ -108,7 +136,7 @@ export function NoteCard({ note, color, userId, onDropToColumn, onUpdate, onDele
             autoFocus
           />
         ) : (
-          <p className="text-sm">{note.content}</p>
+          <p className={`text-sm ${getNoteColor(note.updated_at)}`}>{note.content}</p>
         )}
       </div>
     </Card>

@@ -10,6 +10,7 @@ export interface Note {
   width: number
   height: number
   created_at: string
+  updated_at: string
 
 }
 

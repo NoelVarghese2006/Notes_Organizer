@@ -41,13 +41,13 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
       .from("categories")
       .select("*")
       .eq("user_id", userId)
-      .order("position", { ascending: true })
+      .order("position_x", { ascending: true })
 
     const { data: notes } = await supabase
       .from("notes")
       .select("*")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      .order("updated_at", { ascending: false })
 
     if (!categories || !notes) {
       setExportText("No notes to export")
@@ -68,8 +68,8 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
 
     // Distribute notes
     notes.forEach((note) => {
-      if (note.category_id && notesMap.has(note.category_id)) {
-        notesMap.get(note.category_id)!.push(note)
+      if (note.category && notesMap.has(note.category)) {
+        notesMap.get(note.category)!.push(note)
       } else {
         notesMap.get("uncategorized")!.push(note)
       }
@@ -88,7 +88,7 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
     categories.forEach((category) => {
       const categoryNotes = notesMap.get(category.id) || []
       if (categoryNotes.length > 0) {
-        output += `## ${category.name}\n\n`
+        output += `*${category.name}*\n\n`
         categoryNotes.forEach((note) => {
           output += `• ${note.content}\n`
         })
@@ -140,7 +140,7 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
           <DialogDescription>Your notes organized by category, ready to copy or download as markdown</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-scroll">
           <Textarea
             value={exportText}
             readOnly

@@ -22,7 +22,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
   const categories = useCategoriesStore()
   //const [notes, setNotes] = useState(initialNotes)
   //const [categories, setCategories] = useState(initialCategories)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(0.5)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
@@ -31,7 +31,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
   const hydrated = useRef(false)
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2))
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5))
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.2))
 
   const columnRefs = useRef<Record<string, HTMLDivElement>>({})
 
@@ -153,6 +153,7 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
                   note={note}
                   color={category.color}
                   userId={userId}
+                  zoom={zoom}
                   onDropToColumn={onDropToColumn}
                   onUpdate={(updatedNote) => {
                     notes.setNotes((prev) =>

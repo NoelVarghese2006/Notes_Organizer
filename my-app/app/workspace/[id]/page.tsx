@@ -36,7 +36,7 @@ export default async function WorkspacePage({
     .select("*")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
-    .order("created_at", { ascending: false })
+    .order("updated_at", { ascending: false })
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
