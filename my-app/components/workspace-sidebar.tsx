@@ -66,8 +66,8 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
         name: catName,
         color: "#94a3b8",
         position: categories.categories.length + index,
-        position_x: 100 + (index % 5) * 280,
-        position_y: 100 + Math.floor(index / 5) * 180,
+        position_x: 100 + (index) * 280,
+        position_y: 100,
       }))
 
       const { data } = await supabase

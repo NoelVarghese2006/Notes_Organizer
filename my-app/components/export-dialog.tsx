@@ -19,9 +19,10 @@ interface ExportDialogProps {
   open: boolean
   onClose: () => void
   userId: string
+  projectId: string
 }
 
-export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
+export function ExportDialog({ open, onClose, userId, projectId }: ExportDialogProps) {
   const [exportText, setExportText] = useState("")
   const [copied, setCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -41,6 +42,7 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
       .from("categories")
       .select("*")
       .eq("user_id", userId)
+      .eq("project_id", projectId)
       .order("position_x", { ascending: true })
 
     const { data: notes } = await supabase

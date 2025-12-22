@@ -11,9 +11,9 @@ import { useCategoriesStore, useNotesStore } from "@/lib/store"
 
 interface WorkspaceHeaderProps {
   user: User
+  projectId: string
 }
-
-export function WorkspaceHeader({ user }: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ user, projectId }: WorkspaceHeaderProps) {
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
@@ -77,7 +77,7 @@ export function WorkspaceHeader({ user }: WorkspaceHeaderProps) {
         </div>
       </header>
 
-      <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} userId={user.id} />
+      <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} userId={user.id} projectId={projectId} />
     </>
   )
 }

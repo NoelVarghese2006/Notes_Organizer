@@ -41,7 +41,7 @@ export default async function WorkspacePage({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <WorkspaceHeader user={user} />
+      <WorkspaceHeader user={user} projectId={projectId} />
       <div className="flex flex-1 overflow-hidden">
         <WorkspaceSidebar categories={categories || []} userId={user.id} projectId={projectId} />
         <WorkspaceCanvas notes={notes || []} categories={categories || []} userId={user.id} />
