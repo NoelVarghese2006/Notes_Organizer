@@ -28,6 +28,7 @@ export default async function WorkspacePage({
     .from("categories")
     .select("*")
     .eq("user_id", user.id)
+    .eq("project_id", projectId)
     .order("position", { ascending: true })
 
   // Fetch user's notes
