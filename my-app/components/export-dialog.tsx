@@ -47,7 +47,7 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
       .from("notes")
       .select("*")
       .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
+      .order("order_index", { ascending: true })
 
     if (!categories || !notes) {
       setExportText("No notes to export")
@@ -76,13 +76,12 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
     })
 
     // Build export text
-    let output = `# My Organized Notes\n`
-    output += `Exported on ${new Date().toLocaleDateString(undefined, {
-      weekday: "long",
+    let output = `*Matters for Praises and Prayers – `
+    output += `Dated ${new Date().toLocaleDateString(undefined, {
       year: "numeric",
       month: "long",
       day: "numeric",
-    })}\n\n`
+    })}*\n\n`
     output += `---\n\n`
 
     categories.forEach((category) => {
@@ -107,8 +106,8 @@ export function ExportDialog({ open, onClose, userId }: ExportDialogProps) {
     }
 
     output += `---\n\n`
-    output += `Total notes: ${notes.length}\n`
-    output += `Categories: ${categories.length}\n`
+    // output += `Total notes: ${notes.length}\n`
+    // output += `Categories: ${categories.length}\n`
 
     setExportText(output)
     setIsLoading(false)

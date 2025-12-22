@@ -55,15 +55,15 @@ export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate,
     const diffMs = now.getTime() - updated.getTime()
     const twoMonthsMs = 1000 * 60 * 60 * 24 * 60 // ~60 days
 
-    if (diffMs > twoMonthsMs) return "text-red-300"
-    return "text-inherit" // or text-gray-800, etc.
+    if (diffMs > twoMonthsMs) return "bg-red-950/80"
+    return "bg-inherit" // or text-gray-800, etc.
   }
 
 
   return (
     <Card
       draggable={!isEditing}
-      className="shadow-sm select-none cursor-grab active:cursor-grabbing"
+      className={`shadow-sm select-none cursor-grab active:cursor-grabbing ${getNoteColor(note.updated_at)}`}
       style={{
         borderLeftWidth: 4,
         borderLeftColor: color,
@@ -99,7 +99,7 @@ export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate,
         })
       }}
     >
-      <div className="p-3 flex flex-col gap-2">
+      <div className={`p-3 flex flex-col gap-2`}>
         <div className="flex justify-between items-start">
           {isEditing ? (
             <Button
@@ -167,7 +167,7 @@ export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate,
             autoFocus
           />
         ) : (
-          <p className={`text-sm ${getNoteColor(note.updated_at)}`}>{note.content}</p>
+          <p className={`text-sm`}>{note.content}</p>
         )}
       </div>
     </Card>

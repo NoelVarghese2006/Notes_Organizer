@@ -27,72 +27,101 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
 
   const handleBulkCreate = async () => {
     if (!bulkText.trim()) return
-
     setIsCreating(true)
-    const lines = bulkText
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
 
-    const catLine = lines.filter((line) => line.endsWith(":")).map((line) => line.slice(0, -1).trim())
+    // ---------- 1. Parse input ----------
+    type ParsedNote = {
+      content: string
+      categoryName: string | null
+    }
 
-    const noteLines = lines
-    .filter((line) => !line.endsWith(":"))
-    .map((line) =>
-      line
-        .replace(/^\s*(?:[-*•]\s*)?/, "")
-        .trim()
-    )
+    const parsedNotes: ParsedNote[] = []
+    const categoryNames: string[] = []
 
+    let currentCategory: string | null = null
 
-    const catsToCreate = catLine.map((catName, index) => ({
-      user_id: userId,
-      project_id: projectId,
-      name: catName,
-      color: "#94a3b8",
-      position: categories.categories.length + index,
-      position_x: 100 + (index % 5) * 280,
-      position_y: 100 + Math.floor(index / 5) * 180,
-    }))
+    for (const rawLine of bulkText.split("\n")) {
+      const line = rawLine.trim()
+      if (!line) continue
 
-    // Insert new categories if any
-    if (catsToCreate.length > 0) {
-      const { data: newCategories } = await supabase
+      if (line.endsWith(":")) {
+        currentCategory = line.slice(0, -1).trim()
+        categoryNames.push(currentCategory)
+        continue
+      }
+
+      parsedNotes.push({
+        content: line.replace(/^\s*(?:[-*•]\s*)?/, "").trim(),
+        categoryName: currentCategory,
+      })
+    }
+
+    // ---------- 2. Create categories ----------
+    let newCategories: any[] = []
+
+    if (categoryNames.length > 0) {
+      const catsToCreate = categoryNames.map((catName, index) => ({
+        user_id: userId,
+        project_id: projectId,
+        name: catName,
+        color: "#94a3b8",
+        position: categories.categories.length + index,
+        position_x: 100 + (index % 5) * 280,
+        position_y: 100 + Math.floor(index / 5) * 180,
+      }))
+
+      const { data } = await supabase
         .from("categories")
         .insert(catsToCreate)
         .select()
 
-      if (newCategories) {
-        categories.setCategories([...categories.categories, ...newCategories])
+      if (data) {
+        newCategories = data
+        categories.setCategories([...categories.categories, ...data])
       }
     }
-    if(noteLines.length > 0) {
-      // Create notes from lines
-      const notesToCreate = noteLines.map((line, index) => ({
+
+    // ---------- 3. Build lookup ----------
+    const categoryIdByName = new Map<string, string>()
+
+    categories.categories.forEach((c) =>
+      categoryIdByName.set(c.name, c.id)
+    )
+
+    newCategories.forEach((c) =>
+      categoryIdByName.set(c.name, c.id)
+    )
+
+    // ---------- 4. Create notes ----------
+    if (parsedNotes.length > 0) {
+      const notesToCreate = parsedNotes.map((note, index) => ({
         user_id: userId,
         project_id: projectId,
-        category: categories.categories[0].id || null,
-        content: line,
+        category: note.categoryName
+          ? categoryIdByName.get(note.categoryName) ?? null
+          : categories.getByName("Uncategorized")?.id,
+        content: note.content,
         position_x: 100 + (index % 5) * 280,
         position_y: 100 + Math.floor(index / 5) * 180,
         width: 250,
         height: 150,
+        order_index: index,
       }))
 
-      const { data: newNotes, error } = await supabase.from("notes").insert(notesToCreate).select()
+      const { data: newNotes, error } = await supabase
+        .from("notes")
+        .insert(notesToCreate)
+        .select()
 
-      if (newNotes) {
-        notes.addNotes(newNotes)
-      }
-
-      if (error) {
-        console.error("Error creating notes:", error)
-      }
+      if (newNotes) notes.addNotes(newNotes)
+      if (error) console.error("Error creating notes:", error)
     }
+
     setBulkText("")
     setIsCreating(false)
     router.refresh()
   }
+
 
   return (
     <aside className="w-80 border-r border-border bg-muted/30 flex flex-col overflow-hidden">
