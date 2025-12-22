@@ -10,6 +10,8 @@ import { CardColumn } from "./cat-containers"
 import { useCategoriesStore, useNotesStore } from "@/lib/store"
 import { Note } from "@/lib/store"
 import { Category } from "@/lib/store"
+import { createClient } from "@/lib/client"
+import { basename } from "path"
 
 interface WorkspaceCanvasProps {
   notes: Note[]
@@ -20,8 +22,7 @@ interface WorkspaceCanvasProps {
 export function WorkspaceCanvas({ notes: initialNotes, categories: initialCategories, userId }: WorkspaceCanvasProps) {
   const notes = useNotesStore()
   const categories = useCategoriesStore()
-  //const [notes, setNotes] = useState(initialNotes)
-  //const [categories, setCategories] = useState(initialCategories)
+  const supabase = createClient()
   const [zoom, setZoom] = useState(0.5)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -87,6 +88,47 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
     )
   }
 
+  const normalizeOrder = (notes: Note[]) =>
+    notes.map((n, i) => ({ ...n, order_index: i }))
+
+  const handleMoveNote = (noteId: string, direction: "up" | "down") => {
+    notes.setNotes((prev) => {
+      const grouped = prev.reduce<Record<string, Note[]>>((acc, n) => {
+        acc[n.category] ||= []
+        acc[n.category].push(n)
+        return acc
+      }, {})
+
+      const result: Note[] = []
+
+      for (const category in grouped) {
+        const list = grouped[category]
+          .sort((a, b) => a.order_index - b.order_index)
+
+        const index = list.findIndex((n) => n.id === noteId)
+        if (index === -1) {
+          result.push(...list)
+          continue
+        }
+
+        const targetIndex = direction === "up" ? index - 1 : index + 1
+        if (targetIndex < 0 || targetIndex >= list.length) {
+          result.push(...list)
+          continue
+        }
+
+        ;[list[index], list[targetIndex]] = [
+          list[targetIndex],
+          list[index],
+        ]
+
+        result.push(...normalizeOrder(list))
+      }
+
+      return result
+    })
+  }
+
   return (
     <div className="flex-1 relative overflow-hidden bg-background">
       {/* Canvas Controls */}
@@ -146,15 +188,17 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
           >
             {notes.notes
               .filter((n) => n.category === category.id)
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .map((note) => (
+              .sort((a, b) => a.order_index - b.order_index)
+              .map((note, i, arr) => (
                 <NoteCard
                   key={note.id}
                   note={note}
                   color={category.color}
                   userId={userId}
                   zoom={zoom}
-                  onDropToColumn={onDropToColumn}
+                  isFirst={i === 0}
+                  isLast={i === arr.length - 1}
+                  onMove={handleMoveNote}
                   onUpdate={(updatedNote) => {
                     notes.setNotes((prev) =>
                       prev.map((n) => (n.id === updatedNote.id ? updatedNote : n))

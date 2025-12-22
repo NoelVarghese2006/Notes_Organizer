@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { X, Edit2, Check } from "lucide-react"
+import { ChevronUp, ChevronDown } from "lucide-react"
 import { createClient } from "@/lib/client"
 import { Note } from "@/lib/store"
 
@@ -13,12 +14,16 @@ interface NoteCardProps {
   color: string
   userId: string
   zoom: number
-  onDropToColumn: (noteId: string, x: number) => void
+  isFirst: boolean
+  isLast: boolean
+  //onDropToColumn: (noteId: string, x: number) => void
   onUpdate: (note: Note) => void
   onDelete: (noteId: string) => void
+  onMove: (noteId: string, direction: "up" | "down") => void
+
 }
 
-export function NoteCard({ note, color, userId, zoom, onDropToColumn, onUpdate, onDelete }: NoteCardProps) {
+export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate, onDelete, onMove }: NoteCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(note.content)
   const supabase = createClient()
@@ -28,11 +33,13 @@ export function NoteCard({ note, color, userId, zoom, onDropToColumn, onUpdate, 
 
     await supabase
       .from("notes")
-      .update({ content: editContent })
+      .update({ content: editContent,
+                updated_at: new Date().toISOString()
+       })
       .eq("id", note.id)
       .eq("user_id", userId)
 
-    onUpdate({ ...note, content: editContent })
+    onUpdate({ ...note, content: editContent, updated_at: new Date().toISOString() })
     setIsEditing(false)
   }
 
@@ -105,15 +112,39 @@ export function NoteCard({ note, color, userId, zoom, onDropToColumn, onUpdate, 
               <Check className="size-3" />
             </Button>
           ) : (
-            <Button
-              draggable={false}
-              onMouseDown={(e) => e.stopPropagation()} // <-- added this
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit2 className="size-3" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                draggable={false}
+                onMouseDown={(e) => e.stopPropagation()} // <-- added this
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit2 className="size-3" />
+              </Button>
+            
+              <Button
+                draggable={false}
+                onMouseDown={(e) => e.stopPropagation()}
+                variant="ghost"
+                size="icon"
+                disabled={isFirst}
+                onClick={() => onMove(note.id, "up")}
+              >
+                <ChevronUp className="size-3" />
+              </Button>
+
+              <Button
+                draggable={false}
+                onMouseDown={(e) => e.stopPropagation()}
+                variant="ghost"
+                size="icon"
+                disabled={isLast}
+                onClick={() => onMove(note.id, "down")}
+              >
+                <ChevronDown className="size-3" />
+              </Button>
+            </div>
           )}
           <Button
             draggable={false}
