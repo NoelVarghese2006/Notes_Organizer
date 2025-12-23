@@ -94,19 +94,28 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
 
     // ---------- 4. Create notes ----------
     if (parsedNotes.length > 0) {
-      const notesToCreate = parsedNotes.map((note, index) => ({
+      const categoryCounters = new Map<string, number>()
+
+      const notesToCreate = parsedNotes.map((note) => {
+      const categoryId = note.categoryName
+        ? categoryIdByName.get(note.categoryName) ?? undefined
+        : undefined // skip uncategorized if you removed it
+
+      // Get current index for this category
+      const currentIndex = categoryCounters.get(categoryId || "") || 0
+      categoryCounters.set(categoryId || "", currentIndex + 1)
+
+      return {
         user_id: userId,
         project_id: projectId,
-        category: note.categoryName
-          ? categoryIdByName.get(note.categoryName) ?? null
-          : categories.getByName("Uncategorized")?.id,
+        category: categoryId,
         content: note.content,
-        position_x: 100 + (index % 5) * 280,
-        position_y: 100 + Math.floor(index / 5) * 180,
+        position_x: 100 + (currentIndex) * 300,
+        position_y: 100,
         width: 250,
         height: 150,
-        order_index: index,
-      }))
+        order_index: currentIndex, // local to column now
+      }})
 
       const { data: newNotes, error } = await supabase
         .from("notes")

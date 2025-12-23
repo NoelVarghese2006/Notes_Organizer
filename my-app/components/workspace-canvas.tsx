@@ -81,11 +81,29 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
   }
 
   const moveNoteToCategory = (noteId: string, categoryId: string) => {
-    notes.setNotes((prev) =>
-      prev.map((n) =>
-        n.id === noteId ? { ...n, category: categoryId } : n
-      )
-    )
+      notes.setNotes((prev) => {
+      // Find the note being moved
+      const movingNote = prev.find((n) => n.id === noteId)
+      if (!movingNote) return prev
+
+      // If the note is already in the target category, do nothing
+      if (movingNote.category === categoryId) return prev
+
+      return prev.map((n) => {
+        // Increment order_index of notes in the target category
+        if (n.category === categoryId) {
+          return { ...n, order_index: n.order_index + 1 }
+        }
+
+        // Update the moved note
+        if (n.id === noteId) {
+          return { ...n, category: categoryId, order_index: 0 }
+        }
+
+        // Everything else stays the same
+        return n
+      })
+    })
   }
 
   const normalizeOrder = (notes: Note[]) =>
