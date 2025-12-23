@@ -66,15 +66,15 @@ export function ExportDialog({ open, onClose, userId, projectId }: ExportDialogP
     })
 
     // Add uncategorized section
-    notesMap.set("uncategorized", [])
+    // notesMap.set("uncategorized", [])
 
     // Distribute notes
     notes.forEach((note) => {
       if (note.category && notesMap.has(note.category)) {
         notesMap.get(note.category)!.push(note)
-      } else {
-        notesMap.get("uncategorized")!.push(note)
-      }
+      }// } else {
+      //   notesMap.get("uncategorized")!.push(note)
+      // }
     })
 
     // Build export text
@@ -97,15 +97,15 @@ export function ExportDialog({ open, onClose, userId, projectId }: ExportDialogP
       }
     })
 
-    // Add uncategorized if any
-    const uncategorized = notesMap.get("uncategorized") || []
-    if (uncategorized.length > 0) {
-      output += `## Uncategorized\n\n`
-      uncategorized.forEach((note) => {
-        output += `• ${note.content}\n`
-      })
-      output += `\n`
-    }
+    // // Add uncategorized if any
+    // const uncategorized = notesMap.get("uncategorized") || []
+    // if (uncategorized.length > 0) {
+    //   output += `## Uncategorized\n\n`
+    //   uncategorized.forEach((note) => {
+    //     output += `• ${note.content}\n`
+    //   })
+    //   output += `\n`
+    // }
 
     output += `---\n\n`
     // output += `Total notes: ${notes.length}\n`
