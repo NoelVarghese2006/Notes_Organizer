@@ -109,6 +109,68 @@ export function CardColumn({
     onMoveNote(noteId, id)
   }
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // only left mouse OR touch
+    
+
+    if (e.pointerType === "mouse" && e.button !== 0) return
+
+    e.preventDefault()
+
+    dragRef.current = {
+      isDragging: true,
+      offsetX: e.clientX - pos.x,
+      offsetY: e.clientY - pos.y,
+    }
+
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+
+    window.addEventListener("pointermove", handlePointerMove)
+    window.addEventListener("pointerup", handlePointerUp)
+
+    document.body.style.userSelect = "none"
+    document.body.style.overflow = "hidden"
+  }
+
+  const handlePointerMove = (e: PointerEvent) => {
+    if (!dragRef.current.isDragging) return
+
+    setPos({
+      x: e.clientX - dragRef.current.offsetX,
+      y: e.clientY - dragRef.current.offsetY,
+    })
+  }
+
+  const handlePointerUp = async (e: PointerEvent) => {
+    
+
+    if (!dragRef.current.isDragging) return
+
+    dragRef.current.isDragging = false
+
+    window.removeEventListener("pointermove", handlePointerMove)
+    window.removeEventListener("pointerup", handlePointerUp)
+
+    document.body.style.userSelect = ""
+    document.body.style.overflow = ""
+
+    setPos((latestPos) => {
+      setTimeout(() => {
+        onUpdatePosition(id, latestPos.x, latestPos.y)
+
+        supabase
+          .from("categories")
+          .update({
+            position_x: latestPos.x,
+            position_y: latestPos.y,
+          })
+          .eq("id", id)
+          .eq("user_id", userId)
+      }, 0)
+
+      return latestPos
+    })
+  }
 
 
 
@@ -125,8 +187,9 @@ export function CardColumn({
       }}
     >
       <div
-        className="flex items-center gap-2 p-3 cursor-grab active:cursor-grabbing border-b bg-muted/40"
-        onMouseDown={handleMouseDown}
+        className="flex items-center gap-2 p-3 cursor-grab active:cursor-grabbing border-b bg-muted/40 touch-none"
+        onPointerDown={handlePointerDown}
+        style={{ touchAction: "none" }}
       >
         <GripVertical className="size-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold">{title}</h2>

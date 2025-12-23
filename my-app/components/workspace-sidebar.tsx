@@ -20,6 +20,8 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
   //const [categories, setCategories] = useState(initialCategories)
   const [bulkText, setBulkText] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+
   const router = useRouter()
   const supabase = createClient()
   const notes = useNotesStore()
@@ -41,17 +43,23 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
     let currentCategory: string | null = null
 
     for (const rawLine of bulkText.split("\n")) {
-      const line = rawLine.trim()
-      if (!line) continue
+      const raw = rawLine.trim()
+if (!raw) continue
 
-      if (line.endsWith(":")) {
-        currentCategory = line.slice(0, -1).trim()
+// 1. Strip surrounding markdown emphasis
+      const cleaned = raw
+        .replace(/^[_*]+/, "")
+        .replace(/[_*]+$/, "")
+
+      // 2. Check for category line (colon at end)
+      if (cleaned.endsWith(":")) {
+        currentCategory = cleaned.trim()
         categoryNames.push(currentCategory)
         continue
       }
 
       parsedNotes.push({
-        content: line.replace(/^\s*(?:[-*•]\s*)?/, "").trim(),
+        content: cleaned.replace(/^\s*(?:[-*•]\s*)?/, "").trim(),
         categoryName: currentCategory,
       })
     }
@@ -110,7 +118,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
         project_id: projectId,
         category: categoryId,
         content: note.content,
-        position_x: 100 + (currentIndex) * 300,
+        position_x: 100 + (currentIndex) * 350,
         position_y: 100,
         width: 250,
         height: 150,
@@ -133,7 +141,28 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
 
 
   return (
-    <aside className="w-80 border-r border-border bg-muted/30 flex flex-col overflow-hidden">
+    <>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="fixed top-4 left-4 z-50 md:hidden"
+      onClick={() => setIsOpen((v) => !v)}
+    >
+      {isOpen ? "" : ""}
+    </Button>
+    <aside className={`
+    fixed
+    md:static z-40
+    h-full
+    w-80
+    border-r border-border
+    bg-muted/30
+    flex flex-col
+    overflow-hidden
+    transition-transform duration-300 ease-in-out
+    ${isOpen ? "translate-x-0" : "-translate-x-full"}
+    md:translate-x-0
+  `}>
       <div className="p-6 border-b border-border">
         <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
           <Sparkles className="size-4" />
@@ -192,5 +221,6 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
         </div>
       </div>
     </aside>
+    </>
   )
 }

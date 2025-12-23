@@ -57,7 +57,7 @@ export function WorkspaceHeader({ user, projectId }: WorkspaceHeaderProps) {
               disabled={isSaving}
             >
               <Save className="size-4" />
-              {isSaving ? "Saving..." : "Save"}
+              <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
             </Button>
 
             <Button
@@ -67,12 +67,14 @@ export function WorkspaceHeader({ user, projectId }: WorkspaceHeaderProps) {
               onClick={() => setShowExportDialog(true)}
             >
               <Download className="size-4" />
-              Export
+              <span className="hidden sm:inline">Export</span>
             </Button>
+
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
               <LogOut className="size-4" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </Button>
+
           </div>
         </div>
       </header>

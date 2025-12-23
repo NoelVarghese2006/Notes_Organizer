@@ -36,6 +36,8 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
 
   const columnRefs = useRef<Record<string, HTMLDivElement>>({})
 
+  
+
   useEffect(() => {
     if (hydrated.current) return
     hydrated.current = true
@@ -147,6 +149,35 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
     })
   }
 
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.target !== canvasRef.current) return
+
+    e.preventDefault()
+    canvasRef.current?.setPointerCapture(e.pointerId)
+
+    setIsPanning(true)
+    setPanStart({
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y,
+    })
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isPanning) return
+
+    setPan({
+      x: e.clientX - panStart.x,
+      y: e.clientY - panStart.y,
+    })
+  }
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsPanning(false)
+    canvasRef.current?.releasePointerCapture(e.pointerId)
+  }
+
+
   return (
     <div className="flex-1 relative overflow-hidden bg-background">
       {/* Canvas Controls */}
@@ -165,11 +196,11 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
       {/* Canvas */}
       <div
         ref={canvasRef}
-        className="w-full h-full cursor-move"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className="w-full h-full cursor-move touch-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         style={{
           backgroundImage: `
             linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
@@ -177,6 +208,8 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
           `,
           backgroundSize: `${40 * zoom}px ${40 * zoom}px`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
+          touchAction: "none",
+
         }}
       >
         <div

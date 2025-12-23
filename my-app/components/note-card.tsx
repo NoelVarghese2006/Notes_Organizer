@@ -55,7 +55,7 @@ export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate,
     const diffMs = now.getTime() - updated.getTime()
     const twoMonthsMs = 1000 * 60 * 60 * 24 * 60 // ~60 days
 
-    if (diffMs > twoMonthsMs) return "bg-red-950/80"
+    if (diffMs > twoMonthsMs) return "bg-red-200"
     return "bg-inherit" // or text-gray-800, etc.
   }
 
