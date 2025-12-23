@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,7 +23,7 @@ interface NoteCardProps {
 
 }
 
-export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate, onDelete, onMove }: NoteCardProps) {
+export const NoteCard = memo(({ note, color, userId, zoom, isFirst, isLast, onUpdate, onDelete, onMove }: NoteCardProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(note.content)
   const supabase = createClient()
@@ -173,4 +173,17 @@ export function NoteCard({ note, color, userId, zoom, isFirst, isLast, onUpdate,
     </Card>
 
   )
-}
+},
+  (prev, next) => {
+    return (
+      prev.note.id === next.note.id &&
+      prev.note.content === next.note.content &&
+      prev.note.updated_at === next.note.updated_at &&
+      prev.color === next.color &&
+      prev.zoom === next.zoom &&
+      prev.isFirst === next.isFirst &&
+      prev.isLast === next.isLast
+      // we intentionally ignore functions
+    )
+  }
+)

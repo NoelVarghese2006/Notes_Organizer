@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { NoteCard } from "@/components/note-card"
 import { ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,13 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
 
   const columnRefs = useRef<Record<string, HTMLDivElement>>({})
 
-  
+  const notesByCategory = useMemo(() => {
+    const map: Record<string, Note[]> = {}
+    for (const n of notes.notes) {
+      (map[n.category] ||= []).push(n)
+    }
+    return map
+  }, [notes.notes])
 
   useEffect(() => {
     if (hydrated.current) return
@@ -237,10 +243,9 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
               )
             }
           >
-            {notes.notes
-              .filter((n) => n.category === category.id)
-              .sort((a, b) => a.order_index - b.order_index)
-              .map((note, i, arr) => (
+            {(notesByCategory[category.id] ?? [])
+                .sort((a, b) => a.order_index - b.order_index)
+                .map((note, i, arr) => (
                 <NoteCard
                   key={note.id}
                   note={note}
