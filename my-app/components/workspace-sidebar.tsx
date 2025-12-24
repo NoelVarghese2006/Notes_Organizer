@@ -105,9 +105,9 @@ if (!raw) continue
       const categoryCounters = new Map<string, number>()
 
       const notesToCreate = parsedNotes.map((note) => {
-      const categoryId = note.categoryName
-        ? categoryIdByName.get(note.categoryName) ?? undefined
-        : undefined // skip uncategorized if you removed it
+      const categoryId =
+        categoryIdByName.get(note.categoryName ?? "") ??
+        categories.getByName("Uncategorized")?.id
 
       // Get current index for this category
       const currentIndex = categoryCounters.get(categoryId || "") || 0
