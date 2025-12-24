@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { Plus, FolderOpen, Sparkles } from "lucide-react"
+import { Plus, FolderOpen, Sparkles, Trash2 } from "lucide-react"
 import { createClient } from "@/lib/client"
 import { useRouter } from "next/navigation"
 import { useCategoriesStore, useNotesStore } from "@/lib/store"
@@ -44,9 +44,9 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
 
     for (const rawLine of bulkText.split("\n")) {
       const raw = rawLine.trim()
-if (!raw) continue
+      if (!raw) continue
 
-// 1. Strip surrounding markdown emphasis
+      // 1. Strip surrounding markdown emphasis
       const cleaned = raw
         .replace(/^[_*]+/, "")
         .replace(/[_*]+$/, "")
@@ -137,6 +137,41 @@ if (!raw) continue
     router.refresh()
   }
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (categories.getById(categoryId)?.name === "Uncategorized") {
+      alert("Cannot delete the Uncategorized category.")
+      return
+    }
+    // 1. Delete notes in this category (important for FK safety)
+    await supabase
+      .from("notes")
+      .delete()
+      .eq("category", categoryId)
+      .eq("user_id", userId)
+
+    // 2. Delete the category itself
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", categoryId)
+      .eq("user_id", userId)
+
+    if (error) {
+      console.error("Failed to delete category:", error)
+      return
+    }
+
+    // 3. Update local store
+    categories.setCategories((prev) =>
+      prev.filter((c) => c.id !== categoryId)
+    )
+
+    // 4. Remove notes locally
+    notes.setNotes((prev) =>
+      prev.filter((n) => n.category !== categoryId)
+    )
+  }
+
 
   return (
     <>
@@ -187,32 +222,42 @@ if (!raw) continue
         <div className="space-y-2">
           {categories.categories.map((category) => (
               <Card key={category.id} className="p-3">
-                <div className="flex items-center gap-2">
-                  <label className="relative">
-                    {/* Hidden color input */}
-                    <input
-                      type="color"
-                      value={category.color}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      onChange={(e) =>
-                        categories.setCategories((prev) =>
-                          prev.map((c) =>
-                            c.id === category.id
-                              ? { ...c, color: e.target.value }
-                              : c
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <label className="relative">
+                      <input
+                        type="color"
+                        value={category.color}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={(e) =>
+                          categories.setCategories((prev) =>
+                            prev.map((c) =>
+                              c.id === category.id
+                                ? { ...c, color: e.target.value }
+                                : c
+                            )
                           )
-                        )
-                      }
-                    />
+                        }
+                      />
+                      <div
+                        className="size-4 rounded-full shrink-0 border"
+                        style={{ backgroundColor: category.color }}
+                      />
+                    </label>
 
-                    {/* Visible color circle */}
-                    <div
-                      className="size-4 rounded-full shrink-0 border"
-                      style={{ backgroundColor: category.color }}
-                    />
-                  </label>
+                    <span className="text-sm font-medium truncate">
+                      {category.name}
+                    </span>
+                  </div>
 
-                  <span className="text-sm font-medium truncate">{category.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteCategory(category.id)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </div>
               </Card>
             ))}

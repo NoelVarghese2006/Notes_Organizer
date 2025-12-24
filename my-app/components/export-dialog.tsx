@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/client"
 import { Download, Copy, Check } from "lucide-react"
-import { Category, Note } from "@/lib/store"
+import { Note } from "@/lib/store"
 
 interface ExportDialogProps {
   open: boolean

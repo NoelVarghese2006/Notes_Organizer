@@ -10,8 +10,7 @@ import { CardColumn } from "./cat-containers"
 import { useCategoriesStore, useNotesStore } from "@/lib/store"
 import { Note } from "@/lib/store"
 import { Category } from "@/lib/store"
-import { createClient } from "@/lib/client"
-import { basename } from "path"
+
 
 interface WorkspaceCanvasProps {
   notes: Note[]
@@ -22,7 +21,6 @@ interface WorkspaceCanvasProps {
 export function WorkspaceCanvas({ notes: initialNotes, categories: initialCategories, userId }: WorkspaceCanvasProps) {
   const notes = useNotesStore()
   const categories = useCategoriesStore()
-  const supabase = createClient()
   const [zoom, setZoom] = useState(0.5)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -51,42 +49,6 @@ export function WorkspaceCanvas({ notes: initialNotes, categories: initialCatego
     notes.setNotes(initialNotes)
     categories.setCategories(initialCategories)
   }, [initialNotes, initialCategories])
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target === canvasRef.current) {
-      setIsPanning(true)
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
-    }
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y,
-      })
-    }
-  }
-
-  const handleMouseUp = () => {
-    setIsPanning(false)
-  }
-
-  const onDropToColumn = (noteId: string, clientX: number) => {
-    let closestColumnId: string | null = null
-    let minDistance = Infinity
-
-    for (const [columnId, el] of Object.entries(columnRefs.current)) {
-      const rect = el.getBoundingClientRect()
-      const centerX = rect.left + rect.width / 2
-      const distance = Math.abs(clientX - centerX)
-
-      if (distance < minDistance) {
-        minDistance = distance
-        closestColumnId = columnId
-      }
-    }
-  }
 
   const moveNoteToCategory = (noteId: string, categoryId: string) => {
       notes.setNotes((prev) => {

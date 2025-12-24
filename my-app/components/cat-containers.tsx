@@ -45,49 +45,6 @@ export function CardColumn({
     }
   }, [x, y])
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    dragRef.current = {
-      isDragging: true,
-      offsetX: e.clientX - pos.x,
-      offsetY: e.clientY - pos.y,
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
-    document.body.style.userSelect = "none" // prevent text selection
-  }
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!dragRef.current.isDragging) return
-    const newX = e.clientX - dragRef.current.offsetX
-    const newY = e.clientY - dragRef.current.offsetY
-    setPos({ x: newX, y: newY })
-  }
-
-  const handleMouseUp = async () => {
-    if (!dragRef.current.isDragging) return
-    dragRef.current.isDragging = false
-    window.removeEventListener("mousemove", handleMouseMove)
-    window.removeEventListener("mouseup", handleMouseUp)
-    document.body.style.userSelect = ""
-
-    // Use latest pos
-    setPos((latestPos) => {
-        // schedule parent update after render
-        setTimeout(() => {
-        onUpdatePosition(id, latestPos.x, latestPos.y)
-
-        supabase
-            .from("categories")
-            .update({ position_x: latestPos.x, position_y: latestPos.y })
-            .eq("id", id)
-            .eq("user_id", userId)
-        }, 0)
-
-        return latestPos
-    })
-  }
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault() // REQUIRED to allow dropping
   }
