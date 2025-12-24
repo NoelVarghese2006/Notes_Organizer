@@ -74,8 +74,8 @@ if (!raw) continue
         name: catName,
         color: "#94a3b8",
         position: categories.categories.length + index,
-        position_x: 100 + (index) * 280,
-        position_y: 100,
+        position_x: 100 + (index) * 400,
+        position_y: 200,
       }))
 
       const { data } = await supabase
@@ -118,8 +118,6 @@ if (!raw) continue
         project_id: projectId,
         category: categoryId,
         content: note.content,
-        position_x: 100 + (currentIndex) * 350,
-        position_y: 100,
         width: 250,
         height: 150,
         order_index: currentIndex, // local to column now
