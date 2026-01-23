@@ -201,7 +201,7 @@ export function WorkspaceSidebar({ categories: initialCategories, userId, projec
           <Sparkles className="size-4" />
           Import Notes
         </h2>
-        <p className="text-xs text-muted-foreground mb-4">Paste your bullet points below</p>
+        <p className="text-xs text-muted-foreground mb-4">Paste your notes points below. Lines ending with a colon(:) will create a new category.</p>
         <Textarea
           placeholder="• First note&#10;• Second note&#10;• Third note"
           value={bulkText}
