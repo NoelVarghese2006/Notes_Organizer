@@ -13,4 +13,4 @@ jobs:
     steps:
       - name: Call API
         run: |
-          curl https://http://notes-organizer-aba.vercel.app//api/health
+          curl -i https://http://notes-organizer-aba.vercel.app//api/health
