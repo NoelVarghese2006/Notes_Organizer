@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/server";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Health‑check endpoint used to verify the app can reach Supabase.
  * It performs a minimal query (`SELECT id FROM profiles LIMIT 1`).
