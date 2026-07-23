@@ -11,9 +11,10 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    const { error } = await supabase
-      .from("health")
-      .insert({ timestamp: new Date().toISOString() });
+    const timestamps = Array.from({ length: 10 }, () => ({
+      timestamp: new Date().toISOString(),
+    }));
+    const { error } = await supabase.from("health").insert(timestamps);
 
     if (error) {
       console.error("Health check Supabase error:", error);
